@@ -3,6 +3,7 @@ ADALINE that takes Fourier of the input signal is implemented and compared with 
 
 A sample output is as follows 
 
+![](https://github.com/decanbay/Fourier-ADALINE/blob/master/FFT_FADALINE.png)
 
 ![](https://github.com/decanbay/Fourier-ADALINE/blob/master/Weights.png)
 
