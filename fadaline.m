@@ -1,49 +1,20 @@
+%
+clear all; close all; clc
+fs=1e4; %Sampling frequency
+t=0:1/fs:0.1-1/fs; %time vector
+f_fundamental=50; %fundamental frequency in Hertz
+y=zeros(size(t));
+for k=1:2:12
+    y=y+ (1/k)*sin(2*pi*f_fundamental*k*t);  %Input Signal that you can play with
+end
+
 %%
-% clear all; close all; clc
-% fs=1e5; %örnekleme frekansý (Sampling frequency)
-% t=0:1/fs:0.3-1/fs; %zaman vektörü
-% ftemel=80; %Giriþ sinaylinin temel frekensý 1/s veya Hz
-% y=zeros(size(t));
-% for k=1:2:10
-%     y=y+ (1/k)*sin(2*pi*ftemel*k*t);  %giriþ sinyali
-% end
-
-
-clear all; clc
-fs=1e4;
-t0=0:1/fs:(0.2-1/fs);
-f0 = 49.5
-input0 = 0.25+sin(2*pi*f0*t0+deg2rad(10))+ 0.5*sin(3*2*pi*f0*t0+deg2rad(-23)) + ...
-    0.25*sin(5*2*pi*f0*t0+deg2rad(30)) +0.13*sin(7*2*pi*f0*t0+deg2rad(-15))...
-    +0.06*sin(9*2*pi*f0*t0+deg2rad(50))+0.03*sin(11*2*pi*f0*t0+deg2rad(60)) ;
-% input0 = awgn(input0,20,'measured');
-t1 = 0.2:1/fs:(0.4-1/fs);
-f1 = 50
-input1 = 0.15+0.75*sin(2*pi*f1*t1+deg2rad(20))+ 0.1*sin(3*2*pi*f1*t1+deg2rad(-20)) + ...
-    0.45*sin(5*2*pi*f1*t1+deg2rad(20))+0.64*sin(7*2*pi*f1*t1+deg2rad(-20))...
-    +0.3*sin(9*2*pi*f1*t1+deg2rad(45))+0.25*sin(11*2*pi*f1*t1+deg2rad(65)) ;
-% input1 = awgn(input1,10,'measured');
-
-t2 = 0.4:1/fs:0.6;
-f2 = 50.25
-input2 = 0.35+sin(2*pi*f2*t2+deg2rad(30))+ 0.48*sin(3*2*pi*f2*t2+deg2rad(-23)) + ...
-    0.05*sin(5*2*pi*f2*t2+deg2rad(30))+0.23*sin(7*2*pi*f2*t2+deg2rad(-15))...
-    +0.13*sin(9*2*pi*f2*t2+deg2rad(35))+0.02*sin(11*2*pi*f2*t2+deg2rad(50)) ;
-% input2 = awgn(input2,5,'measured');
-
-y = [input0, input1, input2];
-t=[t0,t1,t2];
-
-ftemel=50
-
-%  y=10*sin(2*pi*ftemel*t)+5*cos(2*pi*5*ftemel*t);
-%%
-w_temel=2*pi*ftemel; %Temel frekans rad/s
-M=20; % belirlenmek istenen harmonik sayýsý
-eta=0.01; %öðrenme oraný (learnin rate)
-W=zeros(2*M,length(t)); % Aðýrlýk matrisi
-y_est=zeros(length(t),1); %neural network un çýktýsý
-er=y_est; %hata vektörü
+w_temel=2*pi*f_fundamental; %Fundamental Frequency 
+M=20; % Number of harmonics that you want to detect
+eta=0.01; %(learning rate)
+W=zeros(2*M,length(t)); % Weights 
+y_est=zeros(length(t),1); %neural network's output
+er=y_est; %error vector
 b=zeros(length(t),1);
 for n=1:length(t)-1
     x=[];
@@ -51,43 +22,50 @@ for n=1:length(t)-1
     x=[x;sin(k*w_temel*t(n));cos(k*w_temel*t(n))]; %input
     end
 y_est(n)=W(:,n)'*x +b(n); % output
-er(n)=(y(n)-y_est(n));   %hata
-W(:,n+1)= W(:,n)+eta*er(n)*x; %aðýrlýklarýn güncellenmesi
-b(n+1)=b(n)+eta*er(n); %bias ýn güncellenmesi
+er(n)=(y(n)-y_est(n));   % Error
+W(:,n+1)= W(:,n)+eta*er(n)*x; %Update weights 
+b(n+1)=b(n)+eta*er(n); %Update Bias
 end
 
-A=W(1:2:end,end); %A katsayýlarý
-B=W(2:2:end,end); %B katsayýlarý
+A=W(1:2:end,end); %A coefficients of Fourier Transform (sine)
+B=W(2:2:end,end); %B coefficients of Fourier Transform (cosine)
 G=sqrt(A.^2 +B.^2);
 % G=G/max(G);
 %% Plotting
 figure
-plot(t,W)% aðýrlýklarýn zamanla deðiþimi
-title('Aðýrlýklarýn Zamanla Deðiþimi')
+plot(t,W)% Change of Weights in time
+title('Change of Weights')
+saveas(gcf,'Weights.png')
+
 
 figure
-plot(t,b)% aðýrlýklarýn zamanla deðiþimi
-title('Bias''ýn Zamanla Deðiþimi')
+plot(t,b)
+title('Change of Bias in time')
+saveas(gcf,'Bias.png')
+
 
 figure
-plot(t,er)% aðýrlýklarýn zamanla deðiþimi
-title('Hatanýn Zamanla Deðiþimi')
+plot(t,er)% 
+title('Change of Error')
+saveas(gcf,'Error.png')
+
 
 figure
 subplot(3,1,1)
 plot(t,y)
 title('Input Signal')
-xlabel('Zaman(s)')
+xlabel('Time(s)')
 
 subplot(3,1,2)
-bar(ftemel:ftemel:M*ftemel,G)
-xlim([0 (M)*ftemel])
-set(gca, 'XTick',(0:ftemel:M*ftemel))
-title('Fadaline Algoritmasý')
+bar(f_fundamental:f_fundamental:M*f_fundamental,G)
+xlim([0 (M)*f_fundamental])
+set(gca, 'XTick',(0:f_fundamental:M*f_fundamental))
+title('Forier-ADALINE')
 
 subplot(3,1,3)
-bar(0:fs/length(t):(fs-fs/length(t)),2*abs(fft(y))/length(t),length(t)/ftemel/M)
-xlim([0 (M)*ftemel])
-set(gca, 'XTick',(0:ftemel:M*ftemel))
+bar(0:fs/length(t):(fs-fs/length(t)),2*abs(fft(y))/length(t),length(t)/f_fundamental/M*4)
+xlim([0 (M)*f_fundamental])
+set(gca, 'XTick',(0:f_fundamental:M*f_fundamental))
 title('FFT')
-xlabel('Frekans [Hz]')
+xlabel('Frequency [Hz]')
+saveas(gcf,'FFT_FADALINE.png')
