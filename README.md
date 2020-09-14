@@ -1,4 +1,4 @@
-# Fourier-ADALINE
+# Fourier-ADALINE (Adaptive Linear Neuron)
 ADALINE that takes Fourier of the input signal is implemented and compared with its FFT. You can find harmonics in your signal alternative to FFT or just play with it.
 
 A sample output is as follows 
